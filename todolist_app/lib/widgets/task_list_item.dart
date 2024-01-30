@@ -2,6 +2,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:todolist_app/data/local_storage.dart';
+import 'package:todolist_app/main.dart';
 import 'package:todolist_app/models/task_model.dart';
 
 class TaskItem extends StatefulWidget {
@@ -15,18 +17,21 @@ class TaskItem extends StatefulWidget {
 
 class _TaskItemState extends State<TaskItem> {
   TextEditingController taskName = TextEditingController();
+  late LocalStorage localStorage;
 
   @override
   void initState() {
-    taskName.text = widget.task.name;
+    localStorage = locator<LocalStorage>();
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
+    taskName.text = widget.task.name;
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
+        border: Border.all(width: 0.3),
         color: Colors.white,
         borderRadius: BorderRadius.circular(8),
         boxShadow: [
@@ -35,10 +40,10 @@ class _TaskItemState extends State<TaskItem> {
       ),
       child: ListTile(
         leading: GestureDetector(
-          onTap: () {
-            setState(() {
-              widget.task.isCompleted = !widget.task.isCompleted;
-            });
+          onTap: () async {
+            widget.task.isCompleted = !widget.task.isCompleted;
+            await localStorage.updateTask(task: widget.task);
+            setState(() {});
           },
           child: Container(
             decoration: BoxDecoration(
@@ -58,17 +63,17 @@ class _TaskItemState extends State<TaskItem> {
                     decoration: TextDecoration.lineThrough, color: Colors.grey),
               )
             : TextField(
-              minLines: 1,
-              maxLines: null,
-              textInputAction: TextInputAction.done,
+                minLines: 1,
+                maxLines: null,
+                textInputAction: TextInputAction.done,
                 controller: taskName,
                 decoration: const InputDecoration(border: InputBorder.none),
-                onSubmitted: (value) {
-                  setState(() {
-                    if (value.length > 3) {
-                      widget.task.name = value;
-                    }
-                  });
+                onSubmitted: (value) async {
+                  if (value.length > 3) {
+                    widget.task.name = value;
+                    await localStorage.updateTask(task: widget.task);
+                  }
+                  setState(() {});
                 },
               ),
         trailing: Text(
